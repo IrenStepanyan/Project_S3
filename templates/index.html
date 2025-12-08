@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfoTheory Image Compression Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            text-align: center;
+            padding: 40px;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f8f9ff;
+        }
+
+        .upload-section input {
+            display: none;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .method-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .method-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #667eea;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .method-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .image-panel {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .image-panel h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .image-panel img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .metrics {
+            margin-top: 30px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .metric-card .label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .metric-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .metric-card .description {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn-compress {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: block;
+            margin: 20px auto;
+        }
+
+        .btn-compress:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .info-box h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>InfoTheory Image Compression Explorer</h1>
+            <p class="subtitle">Explore the intersection of Information Theory and Machine Learning</p>
+        </header>
+
+        <div class="content">
+            <div class="upload-section" onclick="document.getElementById('fileInput').click()">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h3 style="margin-top: 20px;">Upload Image</h3>
+                <p>Click to select an image or drag and drop</p>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>Compression Method</label>
+                    <div class="method-buttons">
+                        <button class="method-btn active" data-method="dct">DCT</button>
+                        <button class="method-btn" data-method="vq">VQ</button>
+                        <button class="method-btn" data-method="autoencoder">AE</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Quality Level: <span id="qualityValue">75</span></label>
+                    <input type="range" id="quality" min="1" max="100" value="75">
+                </div>
+            </div>
+
+            <button class="btn-compress" onclick="compressImage()">Compress Image</button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing image...</p>
+            </div>
+
+            <div class="results" id="results" style="display: none;">
+                <div class="image-panel">
+                    <h3>Original Image</h3>
+                    <img id="originalImage" src="" alt="Original">
+                </div>
+
+                <div class="image-panel">
+                    <h3>Compressed Image</h3>
+                    <img id="compressedImage" src="" alt="Compressed">
+                </div>
+            </div>
+
+            <div class="metrics" id="metrics" style="display: none;">
+                <h2 style="margin-bottom: 20px;">Information Theory Metrics</h2>
+                <div class="metrics-grid" id="metricsGrid">
+                    <!-- Metrics will be inserted here -->
+                </div>
+
+                <div class="info-box">
+                    <h4>Understanding the Metrics:</h4>
+                    <ul>
+                        <li><strong>Entropy:</strong> Measures average information content. Lower compressed entropy = more compression.</li>
+                        <li><strong>PSNR:</strong> Quality metric. Higher is better (typically &gt;30 dB is good).</li>
+                        <li><strong>KL Divergence:</strong> Measures how compressed distribution differs from original.</li>
+                        <li><strong>Mutual Information:</strong> Shows how much information is preserved.</li>
+                        <li><strong>SSIM:</strong> Structural similarity. Values closer to 1 indicate better quality.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedMethod = 'dct';
+        let currentImageData = null;
+
+        // Method selection
+        document.querySelectorAll('.method-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedMethod = this.dataset.method;
+            });
+        });
+
+        // Quality slider
+        document.getElementById('quality').addEventListener('input', function() {
+            document.getElementById('qualityValue').textContent = this.value;
+        });
+
+        // File upload
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentImageData = event.target.result;
+                    document.getElementById('originalImage').src = currentImageData;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Compress image
+        async function compressImage() {
+            if (!currentImageData) {
+                alert('Please upload an image first!');
+                return;
+            }
+
+            const quality = document.getElementById('quality').value;
+            
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('metrics').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/compress', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image: currentImageData,
+                        method: selectedMethod,
+                        quality: parseInt(quality)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Display compressed image
+                    document.getElementById('compressedImage').src = data.compressed_image;
+                    document.getElementById('results').style.display = 'grid';
+                    document.getElementById('metrics').style.display = 'block';
+
+                    // Display metrics
+                    displayMetrics(data.metrics);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error processing image: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        function displayMetrics(metrics) {
+            const metricsGrid = document.getElementById('metricsGrid');
+            metricsGrid.innerHTML = '';
+
+            const metricsList = [
+                {
+                    label: 'Original Entropy',
+                    value: metrics.entropy_original.toFixed(3),
+                    unit: 'bits/pixel',
+                    description: 'Information content'
+                },
+                {
+                    label: 'Compressed Entropy',
+                    value: metrics.entropy_compressed.toFixed(3),
+                    unit: 'bits/pixel',
+                    description: 'Reduced information'
+                },
+                {
+                    label: 'PSNR',
+                    value: metrics.psnr.toFixed(2),
+                    unit: 'dB',
+                    description: 'Quality measure'
+                },
+                {
+                    label: 'SSIM',
+                    value: metrics.ssim.toFixed(4),
+                    unit: '',
+                    description: 'Structural similarity'
+                },
+                {
+                    label: 'Mutual Information',
+                    value: metrics.mutual_information.toFixed(3),
+                    unit: 'bits',
+                    description: 'Preserved information'
+                },
+                {
+                    label: 'KL Divergence',
+                    value: metrics.kl_divergence.toFixed(4),
+                    unit: '',
+                    description: 'Distribution change'
+                },
+                {
+                    label: 'Compression Ratio',
+                    value: metrics.compression_ratio.toFixed(2),
+                    unit: ':1',
+                    description: 'Size reduction'
+                },
+                {
+                    label: 'MSE',
+                    value: metrics.mse.toFixed(2),
+                    unit: '',
+                    description: 'Mean squared error'
+                }
+            ];
+
+            metricsList.forEach(metric => {
+                const card = document.createElement('div');
+                card.className = 'metric-card';
+                card.innerHTML = `
+                    <div class="label">${metric.label}</div>
+                    <div class="value">${metric.value}${metric.unit}</div>
+                    <div class="description">${metric.description}</div>
+                `;
+                metricsGrid.appendChild(card);
+            });
+        }
+
+        // Drag and drop
+        const uploadSection = document.querySelector('.upload-section');
+        
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.style.borderColor = '#764ba2';
+            uploadSection.style.background = '#f8f9ff';
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.style.borderColor = '#667eea';
+            uploadSection.style.background = '';
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.style.borderColor = '#667eea';
+            uploadSection.style.background = '';
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentImageData = event.target.result;
+                    document.getElementById('originalImage').src = currentImageData;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>
